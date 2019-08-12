@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/add_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:visibility="gone">
+
+    <EditText
+        android:id="@+id/et_title"
+        style="@style/input"
+        android:ems="10"
+        android:hint="@string/et_title"
+        android:inputType="textPersonName" />
+
+    <EditText
+        android:id="@+id/et_subtitle"
+        style="@style/input"
+        android:layout_height="100dp"
+        android:ems="10"
+        android:gravity="start|top"
+        android:hint="@string/et_subtitle"
+        android:inputType="textMultiLine" />
+    <EditText
+        android:id="@+id/et_responsible"
+        style="@style/input"
+        android:ems="10"
+        android:hint="@string/et_responsible"
+        android:inputType="textPersonName" />
+
+    <Spinner
+        android:id="@+id/sp_list_task"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:entries="@array/list_task"
+        android:padding="8dp" />
+
+    <Button
+        android:id="@+id/btn_add_task"
+        style="@style/button"
+        android:text="@string/btn_add_task" />
+
+</LinearLayout>
