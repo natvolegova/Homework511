@@ -8,11 +8,9 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
+
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.FileUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,12 +21,8 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-    public static final int REQUEST_CODE_PERMISSION_READ_STORAGE = 10; //пользовательская переменная, определяем права доступа на чтение
     public static final int REQUEST_CODE_PERMISSION_WRITE_STORAGE = 11; //пользовательская переменная, определяем права доступа на запись
     public static final String FILE_TASK = "task_list.txt";
 
@@ -37,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout addLayout;
     private Button btnAddTask;
     private ListView main_content;
-    private File fileTask;
+    private FileHelper TextFileHelper;
     private ItemListAdapter myListAdapter;
 
     @Override
@@ -45,7 +39,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initView();
-        myListAdapter = new ItemListAdapter(this, null);
+
+        //определяем путь к хранению файла
+        String filePatch = getApplicationContext().getExternalFilesDir(null).toString();
+        final String fileSrc = filePatch + "/" + FILE_TASK;
+        //создаем обработчик для файла
+        TextFileHelper = new FileHelper(MainActivity.this, fileSrc);
+
+        //Добавление файла
+        int permissionStatus = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+            TextFileHelper.createFile();
+        } else {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_PERMISSION_WRITE_STORAGE);
+        }
+
+        myListAdapter = new ItemListAdapter(this, null, fileSrc);
+        myListAdapter.prepareContent();
         main_content.setAdapter(myListAdapter);
 
         //открывем окно для добавления новой задачи
@@ -66,9 +76,8 @@ public class MainActivity extends AppCompatActivity {
                 Spinner spListTask = findViewById(R.id.sp_list_task);
                 //формируем итоговую строку для добавления данных и записываем в файл
                 String result = etTitle.getText().toString() + ";" + etSubTitle.getText().toString() + ";" + etResponsible.getText().toString() + ";" + spListTask.getSelectedItemId() + "\n";
-                appendTask(result);
-
-
+                TextFileHelper.addToFile(result);
+                myListAdapter.add_item(result);
                 //закрываем окно
                 addLayout.setVisibility(View.GONE);
                 toolbar.setTitle(getResources().getString(R.string.app_name));
@@ -78,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
                 etSubTitle.setText("");
                 etResponsible.setText("");
                 spListTask.setSelection(0);
-
             }
         });
     }
@@ -90,32 +98,6 @@ public class MainActivity extends AppCompatActivity {
         addLayout = findViewById(R.id.add_layout);
         btnAddTask = findViewById(R.id.btn_add_task);
         main_content = findViewById(R.id.main_content);
-        //проверяем доступ для записи во внешнее хранилище и создаем файл для записи задач
-        int permissionStatus = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
-            //доступ разрешен, создаем файл
-            createTaskFile();
-        } else {
-            //еше не было проверки, запрашиваем доступ
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_PERMISSION_WRITE_STORAGE);
-        }
-    }
-
-    //создаем файл для хранения данных
-    private void createTaskFile() {
-        if (isExternalStorageWritable()) {
-            fileTask = new File(getApplicationContext().getExternalFilesDir(null), FILE_TASK);
-            if (!fileTask.exists()) {
-                try {
-                    fileTask.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                //Toast.makeText(this, fileTask.getAbsolutePath(), Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(this, "File Error", Toast.LENGTH_LONG).show();
-        }
     }
 
     //открываем layout для добавления новой задачи
@@ -127,34 +109,12 @@ public class MainActivity extends AppCompatActivity {
         main_content.setVisibility(View.GONE);
     }
 
-    //добавление задачи в файл и в список элементов
-    private void appendTask(String result) {
-        try {
-            FileWriter logWriter = new FileWriter(fileTask, true);
-            logWriter.append(result);
-            logWriter.close();
-            myListAdapter.add_item(result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //методы для проверки доступа
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_CODE_PERMISSION_WRITE_STORAGE: //пользовательская переменная, доступ на запись
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    createTaskFile();
+                    TextFileHelper.createFile();
                 } else {
                     //request denied
                     Toast.makeText(this, getResources().getString(R.string.msg_request_denied), Toast.LENGTH_LONG).show();

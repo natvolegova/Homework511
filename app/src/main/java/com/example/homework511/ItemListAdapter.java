@@ -9,24 +9,32 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class ItemListAdapter extends BaseAdapter {
     private List<ItemData> items;
     private LayoutInflater layoutInflater;
+    private Context context;
+    private String fileTask;
     //параметр для картинок
     private int[] image_src = {R.drawable.ic_laptop_24px, R.drawable.ic_phone_android_24px, R.drawable.ic_tablet_android_24px};
 
 
     // Конструктор, в который передается контекст
-    ItemListAdapter(Context context, List<ItemData> items) {
+    ItemListAdapter(Context context, List<ItemData> items, String fileTask) {
         if (items == null) {
             this.items = new ArrayList<>();
         } else {
             this.items = items;
         }
         layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.context = context;
+        this.fileTask = fileTask;
     }
 
     public void add_item(String result) {
@@ -35,8 +43,11 @@ public class ItemListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    // Удаляет элемент списка.
+    // удаление элемента списка
     private void removeItem(int position) {
+        FileHelper fh = new FileHelper(context, fileTask);
+        File file = new File(fileTask);
+        fh.deleteFromFile(position, file);
         items.remove(position);
         notifyDataSetChanged();
     }
@@ -90,4 +101,23 @@ public class ItemListAdapter extends BaseAdapter {
             removeItem((Integer) view.getTag());
         }
     };
+    // заполняем данными из файла адаптер
+    public void prepareContent() {
+        try {
+            List<String> lines = new ArrayList<>();
+            File file = new File(fileTask);
+            Scanner reader = new Scanner(new FileInputStream(file), "UTF-8");
+            while (reader.hasNextLine()) {
+                lines.add(reader.nextLine());
+            }
+            reader.close();
+            for (String line : lines) {
+                String[] item = line.split(";");
+                items.add(new ItemData(item[0], item[1], item[2], Integer.parseInt(item[3].trim())));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        notifyDataSetChanged();
+    }
 }
