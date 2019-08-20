@@ -22,7 +22,7 @@ public class ItemListAdapter extends BaseAdapter {
     private Context context;
     private String fileTask;
     //параметр для картинок
-    private int[] image_src = {R.drawable.ic_laptop_24px, R.drawable.ic_phone_android_24px, R.drawable.ic_tablet_android_24px};
+    private int[] imageSrc = {R.drawable.ic_laptop_24px, R.drawable.ic_phone_android_24px, R.drawable.ic_tablet_android_24px};
 
 
     // Конструктор, в который передается контекст
@@ -38,8 +38,8 @@ public class ItemListAdapter extends BaseAdapter {
     }
 
     public void add_item(String result) {
-        String[] result_arr = result.split(";");
-        items.add(new ItemData(result_arr[0], result_arr[1], result_arr[2], Integer.parseInt(result_arr[3].trim())));
+        String[] resultArr = result.split(";");
+        items.add(new ItemData(resultArr[0], resultArr[1], resultArr[2], Integer.parseInt(resultArr[3].trim())));
         notifyDataSetChanged();
     }
 
@@ -86,7 +86,7 @@ public class ItemListAdapter extends BaseAdapter {
         TextView responsible = view.findViewById(R.id.responsible);
         responsible.setText(item.getResponsible());
         ImageView img = view.findViewById(R.id.image);
-        img.setImageResource(image_src[item.getImg_src()]);
+        img.setImageResource(imageSrc[item.getImg_src()]);
         ImageButton btn_delete = view.findViewById(R.id.btn_delete);
         btn_delete.setFocusable(false); //без этого свойсва обработчик на элементе списка не работает
         btn_delete.setOnClickListener(delete_item); //добавляем обработчик нажатия кнопки удаления
